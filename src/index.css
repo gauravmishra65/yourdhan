@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-deepest: #0b0f1a;
+    --bg-card: #131929;
+    --bg-elevated: #1a2235;
+    --bg-hover: #1e2a40;
+    --accent-blue: #3b82f6;
+    --accent-indigo: #6366f1;
+    --gain-green: #22c55e;
+    --loss-red: #ef4444;
+    --warning-amber: #f59e0b;
+    --text-primary: #f1f5f9;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --border: #1e2d45;
+  }
+
+  html {
+    background-color: var(--bg-deepest);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: #0b0f1a;
+    color: #f1f5f9;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0b0f1a; }
+  ::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+  /* Financial numbers — always mono tabular */
+  .font-financial {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card {
+    background: #131929;
+    border: 1px solid #1e2d45;
+    border-radius: 12px;
+  }
+
+  .card-elevated {
+    background: #1a2235;
+    border: 1px solid #1e2d45;
+    border-radius: 12px;
+  }
+
+  .btn-primary {
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: #2563eb; }
+
+  .btn-ghost {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #1e2d45;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { background: #1a2235; color: #f1f5f9; }
+
+  .metric-gain { color: #22c55e; }
+  .metric-loss { color: #ef4444; }
+  .metric-warn { color: #f59e0b; }
+  .metric-neutral { color: #94a3b8; }
+
+  /* Light theme overrides */
+  .light body {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+  .light .card {
+    background: #ffffff;
+    border-color: #e2e8f0;
+  }
+  .light .card-elevated {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+  }
+}
+
+/* Recharts customizations */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #1a2235 !important;
+  border: 1px solid #1e2d45 !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+.recharts-tooltip-label {
+  color: #94a3b8 !important;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #131929 25%, #1a2235 50%, #131929 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+/* Ticker tape */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-tape { animation: ticker 40s linear infinite; }
+.ticker-tape:hover { animation-play-state: paused; }
