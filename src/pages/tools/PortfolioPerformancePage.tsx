@@ -1,13 +1,16 @@
 // ============================================================
 // YourDhan – Portfolio Performance Backtester
 // ============================================================
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AreaChart, Area, ComposedChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import { Info, Plus, X, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Info, Plus, X, TrendingUp, AlertTriangle, FolderPlus, Search } from 'lucide-react';
+import CreatePortfolioModal from '../../components/ui/CreatePortfolioModal';
+import { searchUniverse } from '../../data/stockUniverse';
 
 import { ANNUAL_RETURNS } from '../../data/mockData';
 import {
@@ -201,6 +204,7 @@ export default function PortfolioPerformancePage() {
   const [logScale, setLogScale] = useState(false);
   const [timeRange, setTimeRange] = useState<'5Y' | '10Y' | '15Y' | '20Y' | 'Max'>('Max');
   const [expandedStats, setExpandedStats] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const totalWeight = assets.reduce((s, a) => s + (a.weight || 0), 0);
 
@@ -454,9 +458,17 @@ export default function PortfolioPerformancePage() {
 
             {/* ---- Holdings Section ---- */}
             <section>
-              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                Portfolio Holdings
-              </h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Portfolio Holdings
+                </h2>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 bg-blue-900/20 hover:bg-blue-900/30 px-2.5 py-1 rounded-lg transition-colors border border-blue-800/30"
+                >
+                  <FolderPlus size={12} /> New / Import
+                </button>
+              </div>
 
               {/* Visual weight bar */}
               {assets.filter((a) => a.symbol && a.weight > 0).length > 0 && (
@@ -483,38 +495,15 @@ export default function PortfolioPerformancePage() {
               {/* Asset rows */}
               <div className="space-y-2">
                 {assets.map((a, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-8 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
-                    />
-                    <input
-                      type="text"
-                      value={a.symbol}
-                      onChange={(e) => updateSymbol(i, e.target.value)}
-                      placeholder="SYMBOL"
-                      className="flex-1 bg-[#0b0f1a] border border-[#1e2d45] rounded-lg px-2 py-1.5 text-sm text-white placeholder-slate-700 uppercase focus:border-blue-500 focus:outline-none transition-colors"
-                    />
-                    <div className="relative w-[76px]">
-                      <input
-                        type="number"
-                        value={a.weight}
-                        onChange={(e) => updateWeight(i, parseFloat(e.target.value) || 0)}
-                        min={0}
-                        max={100}
-                        step={1}
-                        className="w-full bg-[#0b0f1a] border border-[#1e2d45] rounded-lg px-2 py-1.5 text-sm text-white text-right pr-5 focus:border-blue-500 focus:outline-none transition-colors"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-slate-600 pointer-events-none">%</span>
-                    </div>
-                    <button
-                      onClick={() => removeAsset(i)}
-                      className="text-slate-700 hover:text-red-400 transition-colors flex-shrink-0"
-                      aria-label="Remove"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
+                  <SymbolRow
+                    key={i}
+                    index={i}
+                    asset={a}
+                    color={CHART_COLORS[i % CHART_COLORS.length]}
+                    onSymbol={(sym) => updateSymbol(i, sym)}
+                    onWeight={(w) => updateWeight(i, w)}
+                    onRemove={() => removeAsset(i)}
+                  />
                 ))}
               </div>
 
@@ -1020,8 +1009,138 @@ export default function PortfolioPerformancePage() {
           )}
         </main>
       </div>
+
+      {/* ── Create/Import Portfolio Modal ── */}
+      {showCreateModal && (
+        <CreatePortfolioModal
+          onClose={() => setShowCreateModal(false)}
+          onApply={(_name, newAssets) => {
+            setAssets(newAssets);
+            store.setAssets(newAssets);
+          }}
+          initial={{ name: '', assets }}
+        />
+      )}
     </div>
   );
+}
+
+// ── Symbol Row with portal autocomplete (escapes overflow:hidden parents) ────
+function SymbolRow({
+  asset, color, onSymbol, onWeight, onRemove,
+}: {
+  index: number
+  asset: { symbol: string; weight: number }
+  color: string
+  onSymbol: (sym: string) => void
+  onWeight: (w: number) => void
+  onRemove: () => void
+}) {
+  const [query, setQuery] = useState(asset.symbol)
+  const [open, setOpen]   = useState(false)
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 })
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const matches = query.length >= 1 ? searchUniverse(query, 8) : []
+
+  // keep query in sync if parent resets assets
+  useEffect(() => { setQuery(asset.symbol) }, [asset.symbol])
+
+  // calculate dropdown position relative to viewport
+  const recalcPos = () => {
+    if (wrapRef.current) {
+      const r = wrapRef.current.getBoundingClientRect()
+      setDropPos({ top: r.bottom + 2, left: r.left, width: Math.max(r.width, 220) })
+    }
+  }
+
+  const openDropdown = () => { recalcPos(); setOpen(true) }
+
+  // close on outside click (excluding the portal dropdown itself)
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      const t = e.target as HTMLElement
+      if (t.closest('[data-symrow-drop]')) return
+      if (wrapRef.current && !wrapRef.current.contains(t)) setOpen(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+
+      {/* Symbol autocomplete */}
+      <div className="relative flex-1" ref={wrapRef}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => {
+            const v = e.target.value.toUpperCase()
+            setQuery(v)
+            onSymbol(v)
+            openDropdown()
+          }}
+          onFocus={() => { if (query.length >= 1) openDropdown() }}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder="SYMBOL"
+          className="w-full bg-[#0b0f1a] border border-[#1e2d45] rounded-lg px-2 py-1.5 text-sm text-white
+                     placeholder-slate-700 uppercase focus:border-blue-500 focus:outline-none transition-colors"
+        />
+
+        {/* Portal dropdown — renders at document.body to escape overflow clipping */}
+        {open && matches.length > 0 && createPortal(
+          <div
+            data-symrow-drop="1"
+            style={{
+              position: 'fixed',
+              top: dropPos.top,
+              left: dropPos.left,
+              width: dropPos.width,
+              zIndex: 99999,
+            }}
+            className="bg-[#131929] border border-[#1e2d45] rounded-lg shadow-2xl overflow-hidden"
+          >
+            {matches.map(item => (
+              <button
+                key={item.symbol}
+                onMouseDown={(e) => {
+                  e.preventDefault() // prevent input blur before selection
+                  setQuery(item.symbol)
+                  onSymbol(item.symbol)
+                  setOpen(false)
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-[#1e2d45] transition-colors text-left"
+              >
+                <span className="font-mono font-semibold text-slate-100 text-xs w-20 truncate">{item.symbol}</span>
+                <span className="text-[10px] text-slate-400 truncate flex-1">{item.name}</span>
+                <span className="text-[9px] text-slate-600 flex-shrink-0">{item.exchange}</span>
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
+      </div>
+
+      {/* Weight */}
+      <div className="relative w-[76px]">
+        <input
+          type="number"
+          value={asset.weight}
+          onChange={(e) => onWeight(parseFloat(e.target.value) || 0)}
+          min={0} max={100} step={1}
+          className="w-full bg-[#0b0f1a] border border-[#1e2d45] rounded-lg px-2 py-1.5 text-sm text-white
+                     text-right pr-5 focus:border-blue-500 focus:outline-none transition-colors"
+        />
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-slate-600 pointer-events-none">%</span>
+      </div>
+      <button onClick={onRemove} className="text-slate-700 hover:text-red-400 transition-colors flex-shrink-0">
+        <X size={14} />
+      </button>
+    </div>
+  )
 }
 
 function SectionHeader({ label, span }: { label: string; span: number }) {

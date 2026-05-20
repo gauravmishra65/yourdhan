@@ -1,13 +1,17 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Wrench, Briefcase, Filter, Star, Crown, Info,
   TrendingUp, BarChart2, Shield, GitBranch, Target, Activity,
   BarChart, LineChart, Shuffle, Calculator, Users, UserCheck,
   Globe, Calendar, Newspaper, Bell, ChevronDown, ChevronRight,
-  TrendingDown, PieChart, IndianRupee,
+  TrendingDown, PieChart, IndianRupee, FolderPlus,
 } from 'lucide-react';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useUIStore } from '../../store/uiStore';
+import { usePortfolioStore } from '../../store/portfolioStore';
+import CreatePortfolioModal from '../ui/CreatePortfolioModal';
+import type { Asset } from '../../types';
 
 interface NavItem {
   path?: string;
@@ -239,10 +243,25 @@ function ExpandableNav({ item, collapsed }: ExpandableNavProps) {
 
 export default function Sidebar() {
   const { sidebarOpen } = useUIStore();
+  const portfolioStore = usePortfolioStore();
+  const navigate = useNavigate();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Desktop ≥1280: full (240px), tablet 768-1279: icon-only (64px)
   // Mobile <768: hidden
   const collapsed = !sidebarOpen;
+
+  const handleCreatePortfolio = async (name: string, assets: Asset[]) => {
+    portfolioStore.setAssets(assets);
+    setShowCreateModal(false);
+    const id = await portfolioStore.saveToCloud(name);
+    if (id) {
+      toast.success(`Portfolio "${name}" saved!`);
+    } else {
+      toast.success(`Portfolio "${name}" loaded`);
+    }
+    navigate('/tools/portfolio-performance');
+  };
 
   return (
     <>
@@ -309,6 +328,47 @@ export default function Sidebar() {
           )}
         </div>
 
+        {/* Create Portfolio CTA */}
+        {!collapsed && (
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid #1e2d45', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(99,102,241,0.15))',
+                border: '1px solid rgba(59,130,246,0.3)',
+                color: '#60a5fa',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(99,102,241,0.25))' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(99,102,241,0.15))' }}
+            >
+              <FolderPlus size={14} /> New Portfolio
+            </button>
+          </div>
+        )}
+        {collapsed && (
+          <div style={{ padding: '6px 4px', borderBottom: '1px solid #1e2d45', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+            <SidebarTooltip label="New Portfolio">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                style={{ width: '40px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', color: '#60a5fa', cursor: 'pointer' }}
+              >
+                <FolderPlus size={15} />
+              </button>
+            </SidebarTooltip>
+          </div>
+        )}
+
         {/* Nav items */}
         <nav
           style={{
@@ -345,6 +405,14 @@ export default function Sidebar() {
           </div>
         )}
       </aside>
+
+      {/* Create Portfolio Modal */}
+      {showCreateModal && (
+        <CreatePortfolioModal
+          onClose={() => setShowCreateModal(false)}
+          onApply={handleCreatePortfolio}
+        />
+      )}
     </>
   );
 }

@@ -292,6 +292,7 @@ select
   p.initial_amount,
   p.start_year,
   p.end_year,
+  p.risk_free_rate,
   p.is_default,
   p.created_at,
   p.updated_at,

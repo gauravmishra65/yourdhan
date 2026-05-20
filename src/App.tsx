@@ -106,7 +106,7 @@ function AppContent() {
           <Route path="/market" element={<Layout><MarketPage /></Layout>} />
           <Route path="/calendar" element={<Layout><CalendarPage /></Layout>} />
           <Route path="/news" element={<Layout><NewsPage /></Layout>} />
-          <Route path="/news/:slug" element={<Layout><NewsDetailPage /></Layout>} />
+          <Route path="/news/:id" element={<Layout><NewsDetailPage /></Layout>} />
           <Route path="/alerts" element={<Layout><AlertsPage /></Layout>} />
           <Route path="/stocks/:ticker" element={<Layout><StockDetailPage /></Layout>} />
           <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
