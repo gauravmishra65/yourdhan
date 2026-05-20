@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, BarChart, Bar, CartesianGrid } from 'recharts'
 import { monteCarloProjection, probabilityOfGain } from '../../lib/finance'
+import PremiumGate from '../../components/ui/PremiumGate'
 
 function formatINR(v: number): string {
   if (v >= 1e7) return `₹${(v/1e7).toFixed(2)} Cr`
@@ -44,6 +45,7 @@ export default function MonteCarloPage() {
   const prob50Loss = result ? (result.p10[years] < initial * 0.5 ? 0.08 : 0.02) : 0
 
   return (
+    <PremiumGate toolName="Monte Carlo Simulation" description="Sign in for free to run thousands of simulated portfolio paths and see probability-weighted outcomes.">
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-100">Monte Carlo Simulation</h1>
@@ -152,5 +154,6 @@ export default function MonteCarloPage() {
         </div>
       )}
     </div>
+    </PremiumGate>
   )
 }

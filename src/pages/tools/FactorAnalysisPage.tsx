@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, LineChart, Line, BarChart, Bar, Cell, CartesianGrid } from 'recharts'
 import { ANNUAL_RETURNS } from '../../data/mockData'
 import { betaCalc, jensensAlpha, rSquared, trackingError, rollingBeta, pearsonCorrelation } from '../../lib/finance'
+import PremiumGate from '../../components/ui/PremiumGate'
 
 const MARKET = ANNUAL_RETURNS.SPY
 const YEARS = Object.keys(ANNUAL_RETURNS.SPY).map(Number).sort()
@@ -32,6 +33,7 @@ export default function FactorAnalysisPage() {
   const betaColor = beta > 1.2 ? 'text-red-400' : beta < 0.8 ? 'text-green-400' : 'text-amber-400'
 
   return (
+    <PremiumGate toolName="Factor Analysis" description="Sign in for free to decompose your portfolio returns into systematic risk factors like beta, alpha, and momentum.">
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-100">Factor Analysis</h1>
@@ -120,5 +122,6 @@ export default function FactorAnalysisPage() {
         </ResponsiveContainer>
       </div>
     </div>
+    </PremiumGate>
   )
 }

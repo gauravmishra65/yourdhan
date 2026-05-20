@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot, PieChart, Pie, Cell, CartesianGrid } from 'recharts'
 import { efficientFrontier, maxSharpeWeights, minimumVarianceWeights, riskParityWeights, equalWeights, portfolioExpectedReturn, portfolioVolatility, sharpeRatio as calcSharpe } from '../../lib/finance'
+import PremiumGate from '../../components/ui/PremiumGate'
 
 const COLORS = ['#3b82f6','#22c55e','#f59e0b','#a855f7','#06b6d4','#f43f5e']
 const DEFAULT_ASSETS = [
@@ -48,6 +49,7 @@ export default function OptimizationPage() {
   ]
 
   return (
+    <PremiumGate toolName="Portfolio Optimization" description="Sign in for free to run Max Sharpe, Min Variance, and Risk Parity optimizations on your portfolio.">
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-100">Portfolio Optimization</h1>
@@ -144,5 +146,6 @@ export default function OptimizationPage() {
         </div>
       </div>
     </div>
+    </PremiumGate>
   )
 }

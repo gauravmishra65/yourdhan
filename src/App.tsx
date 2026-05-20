@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, lazy, Suspense } from 'react'
 import { Toaster } from 'react-hot-toast'
 import Layout from './components/Layout/Layout'
-import { useUIStore } from './store'
+import { useUIStore, useAuthStore } from './store'
 
 // Lazy-load all pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -21,6 +21,8 @@ const NewsPage = lazy(() => import('./pages/NewsPage'))
 const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'))
 const AlertsPage = lazy(() => import('./pages/AlertsPage'))
 const StockDetailPage = lazy(() => import('./pages/stocks/StockDetailPage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const AuthCallbackPage = lazy(() => import('./pages/AuthCallbackPage'))
 
 // Tool pages
 const PortfolioPerformancePage = lazy(() => import('./pages/tools/PortfolioPerformancePage'))
@@ -56,6 +58,7 @@ function NotFoundPage() {
 
 function AppContent() {
   const { theme } = useUIStore()
+  const { initialize } = useAuthStore()
 
   useEffect(() => {
     const root = document.documentElement
@@ -67,6 +70,11 @@ function AppContent() {
       root.classList.remove('dark')
     }
   }, [theme])
+
+  // Initialize Supabase auth session once on mount
+  useEffect(() => {
+    initialize()
+  }, [initialize])
 
   return (
     <>
@@ -109,6 +117,8 @@ function AppContent() {
           <Route path="/news/:id" element={<Layout><NewsDetailPage /></Layout>} />
           <Route path="/alerts" element={<Layout><AlertsPage /></Layout>} />
           <Route path="/stocks/:ticker" element={<Layout><StockDetailPage /></Layout>} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
         </Routes>
       </Suspense>

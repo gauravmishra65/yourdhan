@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot, CartesianGrid, LineChart, Line } from 'recharts'
 import { efficientFrontier, maxSharpeWeights, minimumVarianceWeights, portfolioExpectedReturn, portfolioVolatility, sharpeRatio } from '../../lib/finance'
+import PremiumGate from '../../components/ui/PremiumGate'
 
 const ASSETS = [
   { symbol: 'SPY', name: 'US Large Cap', expRet: 0.10 },
@@ -39,6 +40,7 @@ export default function EfficientFrontierPage() {
   })
 
   return (
+    <PremiumGate toolName="Efficient Frontier" description="Sign in for free to visualise the optimal risk-return tradeoff curve for your portfolio.">
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-100">Efficient Frontier</h1>
@@ -103,5 +105,6 @@ export default function EfficientFrontierPage() {
         ))}
       </div>
     </div>
+    </PremiumGate>
   )
 }

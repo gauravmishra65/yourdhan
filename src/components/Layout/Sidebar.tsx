@@ -10,6 +10,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useUIStore } from '../../store/uiStore';
 import { usePortfolioStore } from '../../store/portfolioStore';
+import { useAuthStore } from '../../store/authStore';
 import CreatePortfolioModal from '../ui/CreatePortfolioModal';
 import type { Asset } from '../../types';
 
@@ -244,6 +245,7 @@ function ExpandableNav({ item, collapsed }: ExpandableNavProps) {
 export default function Sidebar() {
   const { sidebarOpen } = useUIStore();
   const portfolioStore = usePortfolioStore();
+  const { user, signOut } = useAuthStore();
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -390,20 +392,77 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Footer */}
-        {!collapsed && (
-          <div
-            style={{
-              padding: '12px 16px',
-              borderTop: '1px solid #1e2d45',
-              fontSize: '11px',
-              color: '#64748b',
-              flexShrink: 0,
-            }}
-          >
-            YourDhan © 2025
-          </div>
-        )}
+        {/* Footer / User info */}
+        <div
+          style={{
+            padding: collapsed ? '10px 8px' : '10px 12px',
+            borderTop: '1px solid #1e2d45',
+            flexShrink: 0,
+          }}
+        >
+          {user ? (
+            /* Logged-in user card */
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                padding: '6px',
+                transition: 'background 0.15s',
+              }}
+              title={collapsed ? (user.user_metadata?.full_name || user.email || '') : undefined}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#1a2235'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+              onClick={async () => { await signOut() }}
+            >
+              {/* Avatar */}
+              {user.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="avatar"
+                  style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                />
+              ) : (
+                <div style={{
+                  width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '11px', fontWeight: 700, color: 'white',
+                  background: 'linear-gradient(135deg,#3b82f6,#6366f1)',
+                }}>
+                  {(user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase()}
+                </div>
+              )}
+              {!collapsed && (
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                  </p>
+                  <p style={{ fontSize: '10px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    Sign out
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Anonymous — sign in prompt */
+            !collapsed && (
+              <div style={{ fontSize: '11px', color: '#475569', textAlign: 'center' }}>
+                <button
+                  onClick={() => navigate('/login')}
+                  style={{
+                    color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: '11px', fontWeight: 600,
+                  }}
+                >
+                  Sign in
+                </button>
+                {' '}to sync your data
+              </div>
+            )
+          )}
+        </div>
       </aside>
 
       {/* Create Portfolio Modal */}
