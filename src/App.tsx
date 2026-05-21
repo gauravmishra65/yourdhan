@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useEffect, lazy, Suspense } from 'react'
 import { Toaster } from 'react-hot-toast'
 import Layout from './components/Layout/Layout'
-import { useUIStore, useAuthStore } from './store'
+import { useUIStore, useAuthStore, usePriceStore } from './store'
+import { UNIVERSE } from './data/stockUniverse'
+import type { FetchTarget } from './services/liveDataService'
 
 // Lazy-load all pages for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -56,9 +58,19 @@ function NotFoundPage() {
   )
 }
 
+// Build a de-duped FetchTarget list once (module level — no re-computation on render)
+const FETCH_TARGETS: FetchTarget[] = UNIVERSE.map(u => ({
+  symbol:   u.symbol,
+  exchange: u.exchange,
+  type:     u.type,
+}))
+
+const PRICE_REFRESH_MS = 5 * 60 * 1000  // 5 minutes
+
 function AppContent() {
   const { theme } = useUIStore()
   const { initialize } = useAuthStore()
+  const { initPrices, refreshPrices } = usePriceStore()
 
   useEffect(() => {
     const root = document.documentElement
@@ -75,6 +87,14 @@ function AppContent() {
   useEffect(() => {
     initialize()
   }, [initialize])
+
+  // Initialize live prices on mount, then auto-refresh every 5 minutes
+  useEffect(() => {
+    initPrices(FETCH_TARGETS)
+    const timer = setInterval(() => refreshPrices(FETCH_TARGETS), PRICE_REFRESH_MS)
+    return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>

@@ -9,21 +9,23 @@ export type Exchange = 'NSE' | 'BSE' | 'NSE/BSE'
 export type MarketCap = 'Large' | 'Mid' | 'Small' | 'N/A'
 
 export interface UniverseItem {
-  symbol:   string
-  name:     string
-  exchange: Exchange
-  sector:   string
-  price:    number        // approximate CMP / NAV (₹)
-  chg:      number        // 1-day change %
-  type:     InstrumentType
-  cap:      MarketCap
+  symbol:      string
+  name:        string
+  exchange:    Exchange
+  sector:      string
+  price:       number        // approximate CMP / NAV (₹) — used as fallback when live data unavailable
+  chg:         number        // 1-day change % (mock fallback)
+  type:        InstrumentType
+  cap:         MarketCap
   // ── Fundamental / 52-week data ───────────────────────────
-  w52High:  number        // 52-week high (₹)
-  w52Low:   number        // 52-week low  (₹)
-  pe:       number | null // Price / Earnings ratio  (null for ETF/MF)
-  eps:      number | null // Earnings per share ₹     (null for ETF/MF)
-  divYield: number | null // Dividend yield %          (null if no dividend)
-  divPaid:  number | null // Dividend paid per share ₹ (null if no dividend)
+  w52High:     number        // 52-week high (₹)
+  w52Low:      number        // 52-week low  (₹)
+  pe:          number | null // Price / Earnings ratio  (null for ETF/MF)
+  eps:         number | null // Earnings per share ₹     (null for ETF/MF)
+  divYield:    number | null // Dividend yield %          (null if no dividend)
+  divPaid:     number | null // Dividend paid per share ₹ (null if no dividend)
+  // ── Live data identifiers ────────────────────────────────
+  amfiCode?:   number        // AMFI scheme code for mutual funds (used by mfapi.in)
 }
 
 // ── Seeded hash (deterministic pseudo-random) ────────────────────────────────
@@ -418,69 +420,256 @@ const ETFS: UniverseItem[] = [
 // ============================================================
 const MUTUAL_FUNDS: UniverseItem[] = [
   // ── Large Cap ───────────────────────────────────────────
-  { symbol:'MFLC001', name:'Mirae Asset Large Cap Fund - Direct',         exchange:'NSE', sector:'MF: Large Cap',  price:115.42, chg:chg('MFLC001'), type:'MF', cap:'N/A' },
-  { symbol:'AXLC001', name:'Axis Bluechip Fund - Direct',                 exchange:'NSE', sector:'MF: Large Cap',  price:68.35,  chg:chg('AXLC001'), type:'MF', cap:'N/A' },
-  { symbol:'HDLC001', name:'HDFC Top 100 Fund - Direct',                  exchange:'NSE', sector:'MF: Large Cap',  price:945.82, chg:chg('HDLC001'), type:'MF', cap:'N/A' },
-  { symbol:'NILC001', name:'Nippon India Large Cap Fund - Direct',        exchange:'NSE', sector:'MF: Large Cap',  price:82.45,  chg:chg('NILC001'), type:'MF', cap:'N/A' },
-  { symbol:'SBLC001', name:'SBI Bluechip Fund - Direct',                  exchange:'NSE', sector:'MF: Large Cap',  price:78.32,  chg:chg('SBLC001'), type:'MF', cap:'N/A' },
-  { symbol:'ICLC001', name:'ICICI Pru Bluechip Fund - Direct',            exchange:'NSE', sector:'MF: Large Cap',  price:98.75,  chg:chg('ICLC001'), type:'MF', cap:'N/A' },
-  { symbol:'KOLC001', name:'Kotak Bluechip Fund - Direct',                exchange:'NSE', sector:'MF: Large Cap',  price:532.45, chg:chg('KOLC001'), type:'MF', cap:'N/A' },
-  { symbol:'UFLC001', name:'UTI Nifty 50 Index Fund - Direct',            exchange:'NSE', sector:'MF: Index',      price:145.82, chg:chg('UFLC001'), type:'MF', cap:'N/A' },
+  { symbol:'MFLC001', name:'Mirae Asset Large Cap Fund - Direct',         exchange:'NSE', sector:'MF: Large Cap',  price:115.42, chg:chg('MFLC001'), type:'MF', cap:'N/A', amfiCode:118834 },
+  { symbol:'AXLC001', name:'Axis Bluechip Fund - Direct',                 exchange:'NSE', sector:'MF: Large Cap',  price:68.35,  chg:chg('AXLC001'), type:'MF', cap:'N/A', amfiCode:120503 },
+  { symbol:'HDLC001', name:'HDFC Top 100 Fund - Direct',                  exchange:'NSE', sector:'MF: Large Cap',  price:945.82, chg:chg('HDLC001'), type:'MF', cap:'N/A', amfiCode:119598 },
+  { symbol:'NILC001', name:'Nippon India Large Cap Fund - Direct',        exchange:'NSE', sector:'MF: Large Cap',  price:82.45,  chg:chg('NILC001'), type:'MF', cap:'N/A', amfiCode:118777 },
+  { symbol:'SBLC001', name:'SBI Bluechip Fund - Direct',                  exchange:'NSE', sector:'MF: Large Cap',  price:78.32,  chg:chg('SBLC001'), type:'MF', cap:'N/A', amfiCode:119597 },
+  { symbol:'ICLC001', name:'ICICI Pru Bluechip Fund - Direct',            exchange:'NSE', sector:'MF: Large Cap',  price:98.75,  chg:chg('ICLC001'), type:'MF', cap:'N/A', amfiCode:120586 },
+  { symbol:'KOLC001', name:'Kotak Bluechip Fund - Direct',                exchange:'NSE', sector:'MF: Large Cap',  price:532.45, chg:chg('KOLC001'), type:'MF', cap:'N/A', amfiCode:120255 },
+  { symbol:'UFLC001', name:'UTI Nifty 50 Index Fund - Direct',            exchange:'NSE', sector:'MF: Index',      price:145.82, chg:chg('UFLC001'), type:'MF', cap:'N/A', amfiCode:120716 },
   // ── Flexi Cap ───────────────────────────────────────────
-  { symbol:'PPFC001', name:'Parag Parikh Flexi Cap Fund - Direct',        exchange:'NSE', sector:'MF: Flexi Cap',  price:78.45,  chg:chg('PPFC001'), type:'MF', cap:'N/A' },
-  { symbol:'AXFC001', name:'Axis Flexi Cap Fund - Direct',                exchange:'NSE', sector:'MF: Flexi Cap',  price:20.85,  chg:chg('AXFC001'), type:'MF', cap:'N/A' },
-  { symbol:'HDFC001', name:'HDFC Flexi Cap Fund - Direct',                exchange:'NSE', sector:'MF: Flexi Cap',  price:1845.32,chg:chg('HDFC001'), type:'MF', cap:'N/A' },
-  { symbol:'UTFC001', name:'UTI Flexi Cap Fund - Direct',                 exchange:'NSE', sector:'MF: Flexi Cap',  price:312.45, chg:chg('UTFC001'), type:'MF', cap:'N/A' },
-  { symbol:'QUFC001', name:'Quant Flexi Cap Fund - Direct',               exchange:'NSE', sector:'MF: Flexi Cap',  price:82.35,  chg:chg('QUFC001'), type:'MF', cap:'N/A' },
+  { symbol:'PPFC001', name:'Parag Parikh Flexi Cap Fund - Direct',        exchange:'NSE', sector:'MF: Flexi Cap',  price:78.45,  chg:chg('PPFC001'), type:'MF', cap:'N/A', amfiCode:122639 },
+  { symbol:'AXFC001', name:'Axis Flexi Cap Fund - Direct',                exchange:'NSE', sector:'MF: Flexi Cap',  price:20.85,  chg:chg('AXFC001'), type:'MF', cap:'N/A', amfiCode:120621 },
+  { symbol:'HDFC001', name:'HDFC Flexi Cap Fund - Direct',                exchange:'NSE', sector:'MF: Flexi Cap',  price:1845.32,chg:chg('HDFC001'), type:'MF', cap:'N/A', amfiCode:119592 },
+  { symbol:'UTFC001', name:'UTI Flexi Cap Fund - Direct',                 exchange:'NSE', sector:'MF: Flexi Cap',  price:312.45, chg:chg('UTFC001'), type:'MF', cap:'N/A', amfiCode:120716 },
+  { symbol:'QUFC001', name:'Quant Flexi Cap Fund - Direct',               exchange:'NSE', sector:'MF: Flexi Cap',  price:82.35,  chg:chg('QUFC001'), type:'MF', cap:'N/A', amfiCode:135782 },
+  { symbol:'ABSLFL01',name:'Aditya Birla SL Flexi Cap Fund - Direct',     exchange:'NSE', sector:'MF: Flexi Cap',  price:1645.82,chg:chg('ABSLFL01'),type:'MF', cap:'N/A', amfiCode:119561 },
+  { symbol:'FRANKFI01',name:'Franklin India Flexi Cap Fund - Direct',     exchange:'NSE', sector:'MF: Flexi Cap',  price:1245.45,chg:chg('FRANKFI01'),type:'MF',cap:'N/A', amfiCode:104917 },
+  { symbol:'PGIMFL01',name:'PGIM India Flexi Cap Fund - Direct',          exchange:'NSE', sector:'MF: Flexi Cap',  price:32.45,  chg:chg('PGIMFL01'), type:'MF', cap:'N/A', amfiCode:125497 },
+  { symbol:'INVESCFL01',name:'Invesco India Flexi Cap Fund - Direct',     exchange:'NSE', sector:'MF: Flexi Cap',  price:78.45,  chg:chg('INVESCFL01'),type:'MF',cap:'N/A', amfiCode:120816 },
   // ── Mid Cap ─────────────────────────────────────────────
-  { symbol:'MIMC001', name:'Mirae Asset Midcap Fund - Direct',            exchange:'NSE', sector:'MF: Mid Cap',    price:32.45,  chg:chg('MIMC001'), type:'MF', cap:'N/A' },
-  { symbol:'NIMC001', name:'Nippon India Growth Fund (Mid Cap) - Direct', exchange:'NSE', sector:'MF: Mid Cap',    price:4845.32,chg:chg('NIMC001'), type:'MF', cap:'N/A' },
-  { symbol:'HDMC001', name:'HDFC Mid-Cap Opportunities Fund - Direct',    exchange:'NSE', sector:'MF: Mid Cap',    price:182.45, chg:chg('HDMC001'), type:'MF', cap:'N/A' },
-  { symbol:'AXMC001', name:'Axis Midcap Fund - Direct',                   exchange:'NSE', sector:'MF: Mid Cap',    price:98.45,  chg:chg('AXMC001'), type:'MF', cap:'N/A' },
-  { symbol:'KOMC001', name:'Kotak Emerging Equity Fund - Direct',         exchange:'NSE', sector:'MF: Mid Cap',    price:145.82, chg:chg('KOMC001'), type:'MF', cap:'N/A' },
-  { symbol:'SBMC001', name:'SBI Magnum Midcap Fund - Direct',             exchange:'NSE', sector:'MF: Mid Cap',    price:245.32, chg:chg('SBMC001'), type:'MF', cap:'N/A' },
+  { symbol:'MIMC001', name:'Mirae Asset Midcap Fund - Direct',            exchange:'NSE', sector:'MF: Mid Cap',    price:32.45,  chg:chg('MIMC001'), type:'MF', cap:'N/A', amfiCode:119061 },
+  { symbol:'NIMC001', name:'Nippon India Growth Fund (Mid Cap) - Direct', exchange:'NSE', sector:'MF: Mid Cap',    price:4845.32,chg:chg('NIMC001'), type:'MF', cap:'N/A', amfiCode:118808 },
+  { symbol:'HDMC001', name:'HDFC Mid-Cap Opportunities Fund - Direct',    exchange:'NSE', sector:'MF: Mid Cap',    price:182.45, chg:chg('HDMC001'), type:'MF', cap:'N/A', amfiCode:119027 },
+  { symbol:'AXMC001', name:'Axis Midcap Fund - Direct',                   exchange:'NSE', sector:'MF: Mid Cap',    price:98.45,  chg:chg('AXMC001'), type:'MF', cap:'N/A', amfiCode:120551 },
+  { symbol:'KOMC001', name:'Kotak Emerging Equity Fund - Direct',         exchange:'NSE', sector:'MF: Mid Cap',    price:145.82, chg:chg('KOMC001'), type:'MF', cap:'N/A', amfiCode:120187 },
+  { symbol:'SBMC001', name:'SBI Magnum Midcap Fund - Direct',             exchange:'NSE', sector:'MF: Mid Cap',    price:245.32, chg:chg('SBMC001'), type:'MF', cap:'N/A', amfiCode:119267 },
+  { symbol:'DSPMC001',name:'DSP Midcap Fund - Direct',                    exchange:'NSE', sector:'MF: Mid Cap',    price:145.45, chg:chg('DSPMC001'), type:'MF', cap:'N/A', amfiCode:120175 },
+  { symbol:'ABSLMC01',name:'Aditya Birla SL Midcap Fund - Direct',        exchange:'NSE', sector:'MF: Mid Cap',    price:745.82, chg:chg('ABSLMC01'), type:'MF', cap:'N/A', amfiCode:119556 },
   // ── Small Cap ───────────────────────────────────────────
-  { symbol:'NISC001', name:'Nippon India Small Cap Fund - Direct',        exchange:'NSE', sector:'MF: Small Cap',  price:145.82, chg:chg('NISC001'), type:'MF', cap:'N/A' },
-  { symbol:'SBSC001', name:'SBI Small Cap Fund - Direct',                 exchange:'NSE', sector:'MF: Small Cap',  price:145.85, chg:chg('SBSC001'), type:'MF', cap:'N/A' },
-  { symbol:'AXSC001', name:'Axis Small Cap Fund - Direct',                exchange:'NSE', sector:'MF: Small Cap',  price:78.45,  chg:chg('AXSC001'), type:'MF', cap:'N/A' },
-  { symbol:'HDSC001', name:'HDFC Small Cap Fund - Direct',                exchange:'NSE', sector:'MF: Small Cap',  price:112.45, chg:chg('HDSC001'), type:'MF', cap:'N/A' },
-  { symbol:'QUSC001', name:'Quant Small Cap Fund - Direct',               exchange:'NSE', sector:'MF: Small Cap',  price:245.82, chg:chg('QUSC001'), type:'MF', cap:'N/A' },
-  { symbol:'ICSC001', name:'ICICI Pru Smallcap Fund - Direct',            exchange:'NSE', sector:'MF: Small Cap',  price:82.45,  chg:chg('ICSC001'), type:'MF', cap:'N/A' },
+  { symbol:'NISC001', name:'Nippon India Small Cap Fund - Direct',        exchange:'NSE', sector:'MF: Small Cap',  price:145.82, chg:chg('NISC001'), type:'MF', cap:'N/A', amfiCode:118825 },
+  { symbol:'SBSC001', name:'SBI Small Cap Fund - Direct',                 exchange:'NSE', sector:'MF: Small Cap',  price:145.85, chg:chg('SBSC001'), type:'MF', cap:'N/A', amfiCode:119250 },
+  { symbol:'AXSC001', name:'Axis Small Cap Fund - Direct',                exchange:'NSE', sector:'MF: Small Cap',  price:78.45,  chg:chg('AXSC001'), type:'MF', cap:'N/A', amfiCode:120253 },
+  { symbol:'HDSC001', name:'HDFC Small Cap Fund - Direct',                exchange:'NSE', sector:'MF: Small Cap',  price:112.45, chg:chg('HDSC001'), type:'MF', cap:'N/A', amfiCode:119047 },
+  { symbol:'QUSC001', name:'Quant Small Cap Fund - Direct',               exchange:'NSE', sector:'MF: Small Cap',  price:245.82, chg:chg('QUSC001'), type:'MF', cap:'N/A', amfiCode:135784 },
+  { symbol:'ICSC001', name:'ICICI Pru Smallcap Fund - Direct',            exchange:'NSE', sector:'MF: Small Cap',  price:82.45,  chg:chg('ICSC001'), type:'MF', cap:'N/A', amfiCode:120587 },
+  { symbol:'ABSLSC01',name:'Aditya Birla SL Small Cap Fund - Direct',     exchange:'NSE', sector:'MF: Small Cap',  price:78.45,  chg:chg('ABSLSC01'), type:'MF', cap:'N/A', amfiCode:119558 },
   // ── ELSS (Tax Saving) ───────────────────────────────────
-  { symbol:'AXEL001', name:'Axis Long Term Equity Fund (ELSS) - Direct',  exchange:'NSE', sector:'MF: ELSS',       price:78.45,  chg:chg('AXEL001'), type:'MF', cap:'N/A' },
-  { symbol:'MIEL001', name:'Mirae Asset Tax Saver Fund (ELSS) - Direct',  exchange:'NSE', sector:'MF: ELSS',       price:42.85,  chg:chg('MIEL001'), type:'MF', cap:'N/A' },
-  { symbol:'NIEL001', name:'Nippon India Tax Saver (ELSS) - Direct',      exchange:'NSE', sector:'MF: ELSS',       price:98.45,  chg:chg('NIEL001'), type:'MF', cap:'N/A' },
-  { symbol:'SBEL001', name:'SBI Long Term Equity Fund (ELSS) - Direct',   exchange:'NSE', sector:'MF: ELSS',       price:445.82, chg:chg('SBEL001'), type:'MF', cap:'N/A' },
-  { symbol:'QUEL001', name:'Quant ELSS Tax Saver Fund - Direct',          exchange:'NSE', sector:'MF: ELSS',       price:312.45, chg:chg('QUEL001'), type:'MF', cap:'N/A' },
+  { symbol:'AXEL001', name:'Axis Long Term Equity Fund (ELSS) - Direct',  exchange:'NSE', sector:'MF: ELSS',       price:78.45,  chg:chg('AXEL001'), type:'MF', cap:'N/A', amfiCode:120503 },
+  { symbol:'MIEL001', name:'Mirae Asset Tax Saver Fund (ELSS) - Direct',  exchange:'NSE', sector:'MF: ELSS',       price:42.85,  chg:chg('MIEL001'), type:'MF', cap:'N/A', amfiCode:120847 },
+  { symbol:'NIEL001', name:'Nippon India Tax Saver (ELSS) - Direct',      exchange:'NSE', sector:'MF: ELSS',       price:98.45,  chg:chg('NIEL001'), type:'MF', cap:'N/A', amfiCode:118817 },
+  { symbol:'SBEL001', name:'SBI Long Term Equity Fund (ELSS) - Direct',   exchange:'NSE', sector:'MF: ELSS',       price:445.82, chg:chg('SBEL001'), type:'MF', cap:'N/A', amfiCode:119243 },
+  { symbol:'QUEL001', name:'Quant ELSS Tax Saver Fund - Direct',          exchange:'NSE', sector:'MF: ELSS',       price:312.45, chg:chg('QUEL001'), type:'MF', cap:'N/A', amfiCode:135785 },
+  { symbol:'MFELSS01',name:'Motilal Oswal ELSS Tax Saver Fund - Direct',  exchange:'NSE', sector:'MF: ELSS',       price:45.82,  chg:chg('MFELSS01'), type:'MF', cap:'N/A' },
+  { symbol:'KCELSS01',name:'Kotak Tax Saver Fund - Direct',               exchange:'NSE', sector:'MF: ELSS',       price:98.45,  chg:chg('KCELSS01'), type:'MF', cap:'N/A' },
   // ── Index Funds ─────────────────────────────────────────
-  { symbol:'UTNF001', name:'UTI Nifty 50 Index Fund - Direct',            exchange:'NSE', sector:'MF: Index',      price:145.82, chg:chg('UTNF001'), type:'MF', cap:'N/A' },
-  { symbol:'HDNF001', name:'HDFC Index Fund Nifty 50 Plan - Direct',      exchange:'NSE', sector:'MF: Index',      price:245.32, chg:chg('HDNF001'), type:'MF', cap:'N/A' },
-  { symbol:'SBNF001', name:'SBI Nifty Index Fund - Direct',               exchange:'NSE', sector:'MF: Index',      price:245.45, chg:chg('SBNF001'), type:'MF', cap:'N/A' },
-  { symbol:'MONF001', name:'Motilal Oswal Nifty 50 Index Fund - Direct',  exchange:'NSE', sector:'MF: Index',      price:25.82,  chg:chg('MONF001'), type:'MF', cap:'N/A' },
-  { symbol:'MINN001', name:'Mirae Asset Nifty Next 50 ETF FoF - Direct',  exchange:'NSE', sector:'MF: Index',      price:18.45,  chg:chg('MINN001'), type:'MF', cap:'N/A' },
-  { symbol:'NANQ001', name:'Nippon India Nasdaq 100 FoF - Direct',        exchange:'NSE', sector:'MF: Index',      price:18.85,  chg:chg('NANQ001'), type:'MF', cap:'N/A' },
-  { symbol:'MONQ001', name:'Motilal Oswal Nasdaq 100 FoF - Direct',       exchange:'NSE', sector:'MF: Index',      price:28.45,  chg:chg('MONQ001'), type:'MF', cap:'N/A' },
+  { symbol:'UTNF001', name:'UTI Nifty 50 Index Fund - Direct',            exchange:'NSE', sector:'MF: Index',      price:145.82, chg:chg('UTNF001'), type:'MF', cap:'N/A', amfiCode:120716 },
+  { symbol:'HDNF001', name:'HDFC Index Fund Nifty 50 Plan - Direct',      exchange:'NSE', sector:'MF: Index',      price:245.32, chg:chg('HDNF001'), type:'MF', cap:'N/A', amfiCode:119096 },
+  { symbol:'SBNF001', name:'SBI Nifty Index Fund - Direct',               exchange:'NSE', sector:'MF: Index',      price:245.45, chg:chg('SBNF001'), type:'MF', cap:'N/A', amfiCode:119267 },
+  { symbol:'MONF001', name:'Motilal Oswal Nifty 50 Index Fund - Direct',  exchange:'NSE', sector:'MF: Index',      price:25.82,  chg:chg('MONF001'), type:'MF', cap:'N/A', amfiCode:130503 },
+  { symbol:'MINN001', name:'Mirae Asset Nifty Next 50 ETF FoF - Direct',  exchange:'NSE', sector:'MF: Index',      price:18.45,  chg:chg('MINN001'), type:'MF', cap:'N/A', amfiCode:119061 },
+  { symbol:'NANQ001', name:'Nippon India Nasdaq 100 FoF - Direct',        exchange:'NSE', sector:'MF: Index',      price:18.85,  chg:chg('NANQ001'), type:'MF', cap:'N/A', amfiCode:118831 },
+  { symbol:'MONQ001', name:'Motilal Oswal Nasdaq 100 FoF - Direct',       exchange:'NSE', sector:'MF: Index',      price:28.45,  chg:chg('MONQ001'), type:'MF', cap:'N/A', amfiCode:130500 },
+  { symbol:'ICNN501', name:'ICICI Pru Nifty Next 50 Index Fund - Direct', exchange:'NSE', sector:'MF: Index',      price:22.45,  chg:chg('ICNN501'), type:'MF', cap:'N/A' },
+  { symbol:'MONIF001',name:'Motilal Oswal Nifty Midcap 150 - Direct',     exchange:'NSE', sector:'MF: Index',      price:28.45,  chg:chg('MONIF001'),type:'MF', cap:'N/A' },
+  { symbol:'HSNIFTY50',name:'HSBC Nifty 50 Index Fund - Direct',          exchange:'NSE', sector:'MF: Index',      price:18.45,  chg:chg('HSNIFTY50'),type:'MF', cap:'N/A' },
   // ── Hybrid ──────────────────────────────────────────────
-  { symbol:'PPBF001', name:'ICICI Pru Balanced Advantage Fund - Direct',  exchange:'NSE', sector:'MF: Hybrid',     price:68.45,  chg:chg('PPBF001'), type:'MF', cap:'N/A' },
-  { symbol:'HDBF001', name:'HDFC Balanced Advantage Fund - Direct',       exchange:'NSE', sector:'MF: Hybrid',     price:512.45, chg:chg('HDBF001'), type:'MF', cap:'N/A' },
-  { symbol:'KOBF001', name:'Kotak Balanced Advantage Fund - Direct',      exchange:'NSE', sector:'MF: Hybrid',     price:18.85,  chg:chg('KOBF001'), type:'MF', cap:'N/A' },
-  { symbol:'SBBF001', name:'SBI Equity Hybrid Fund - Direct',             exchange:'NSE', sector:'MF: Hybrid',     price:298.45, chg:chg('SBBF001'), type:'MF', cap:'N/A' },
+  { symbol:'PPBF001', name:'ICICI Pru Balanced Advantage Fund - Direct',  exchange:'NSE', sector:'MF: Hybrid',     price:68.45,  chg:chg('PPBF001'), type:'MF', cap:'N/A', amfiCode:120586 },
+  { symbol:'HDBF001', name:'HDFC Balanced Advantage Fund - Direct',       exchange:'NSE', sector:'MF: Hybrid',     price:512.45, chg:chg('HDBF001'), type:'MF', cap:'N/A', amfiCode:119571 },
+  { symbol:'KOBF001', name:'Kotak Balanced Advantage Fund - Direct',      exchange:'NSE', sector:'MF: Hybrid',     price:18.85,  chg:chg('KOBF001'), type:'MF', cap:'N/A', amfiCode:120193 },
+  { symbol:'SBBF001', name:'SBI Equity Hybrid Fund - Direct',             exchange:'NSE', sector:'MF: Hybrid',     price:298.45, chg:chg('SBBF001'), type:'MF', cap:'N/A', amfiCode:119237 },
   { symbol:'AXBF001', name:'Axis Equity Hybrid Fund - Direct',            exchange:'NSE', sector:'MF: Hybrid',     price:28.45,  chg:chg('AXBF001'), type:'MF', cap:'N/A' },
+  { symbol:'MIIFHY01',name:'Mirae Asset Hybrid Equity Fund - Direct',     exchange:'NSE', sector:'MF: Hybrid',     price:32.45,  chg:chg('MIIFHY01'),type:'MF', cap:'N/A', amfiCode:118837 },
+  { symbol:'KOTBAF01',name:'Kotak Balanced Advantage Fund - Direct',      exchange:'NSE', sector:'MF: Hybrid',     price:22.45,  chg:chg('KOTBAF01'),type:'MF', cap:'N/A', amfiCode:120193 },
+  { symbol:'NIPBF001',name:'Nippon India Balanced Advantage Fund-Direct', exchange:'NSE', sector:'MF: Hybrid',     price:22.85,  chg:chg('NIPBF001'), type:'MF', cap:'N/A' },
   // ── Debt ────────────────────────────────────────────────
   { symbol:'ABSL001', name:'Aditya Birla SL Short Term Fund - Direct',    exchange:'NSE', sector:'MF: Debt',       price:48.45,  chg:chg('ABSL001'), type:'MF', cap:'N/A' },
   { symbol:'HDDT001', name:'HDFC Corporate Bond Fund - Direct',           exchange:'NSE', sector:'MF: Debt',       price:32.45,  chg:chg('HDDT001'), type:'MF', cap:'N/A' },
   { symbol:'NICB001', name:'Nippon India Credit Risk Fund - Direct',      exchange:'NSE', sector:'MF: Debt',       price:18.45,  chg:chg('NICB001'), type:'MF', cap:'N/A' },
-  { symbol:'ICITDT01', name:'ICICI Pru Liquid Fund - Direct',             exchange:'NSE', sector:'MF: Liquid',     price:345.85, chg:chg('ICITDT01'),type:'MF', cap:'N/A' },
-  { symbol:'HDLQ001', name:'HDFC Liquid Fund - Direct',                   exchange:'NSE', sector:'MF: Liquid',     price:4512.45,chg:chg('HDLQ001'), type:'MF', cap:'N/A' },
-  // ── Sectoral ────────────────────────────────────────────
+  { symbol:'ICITDT01',name:'ICICI Pru Liquid Fund - Direct',              exchange:'NSE', sector:'MF: Liquid',     price:345.85, chg:chg('ICITDT01'),type:'MF', cap:'N/A', amfiCode:120606 },
+  { symbol:'HDLQ001', name:'HDFC Liquid Fund - Direct',                   exchange:'NSE', sector:'MF: Liquid',     price:4512.45,chg:chg('HDLQ001'), type:'MF', cap:'N/A', amfiCode:119563 },
+  { symbol:'SBCB001', name:'SBI Corporate Bond Fund - Direct',            exchange:'NSE', sector:'MF: Debt',       price:18.45,  chg:chg('SBCB001'), type:'MF', cap:'N/A' },
+  { symbol:'KOGLF001',name:'Kotak Gilt Fund - Direct',                    exchange:'NSE', sector:'MF: Gilt',       price:98.45,  chg:chg('KOGLF001'),type:'MF', cap:'N/A' },
+  // ── Sectoral / Thematic ─────────────────────────────────
   { symbol:'MFTEC01', name:'Mirae Asset NYSE FANG+ ETF FoF - Direct',     exchange:'NSE', sector:'MF: Tech',       price:22.85,  chg:chg('MFTEC01'), type:'MF', cap:'N/A' },
   { symbol:'NIBFS01', name:'Nippon India Banking & PSU Debt - Direct',    exchange:'NSE', sector:'MF: Banking',    price:18.45,  chg:chg('NIBFS01'), type:'MF', cap:'N/A' },
-  { symbol:'SBHCS01', name:'SBI Healthcare Opportunities Fund - Direct',  exchange:'NSE', sector:'MF: Healthcare', price:378.45, chg:chg('SBHCS01'), type:'MF', cap:'N/A' },
-  { symbol:'NIPHC01', name:'Nippon India Pharma Fund - Direct',           exchange:'NSE', sector:'MF: Healthcare', price:482.45, chg:chg('NIPHC01'), type:'MF', cap:'N/A' },
+  { symbol:'SBHCS01', name:'SBI Healthcare Opportunities Fund - Direct',  exchange:'NSE', sector:'MF: Healthcare', price:378.45, chg:chg('SBHCS01'), type:'MF', cap:'N/A', amfiCode:119253 },
+  { symbol:'NIPHC01', name:'Nippon India Pharma Fund - Direct',           exchange:'NSE', sector:'MF: Healthcare', price:482.45, chg:chg('NIPHC01'), type:'MF', cap:'N/A', amfiCode:118819 },
   { symbol:'TAIFC01', name:'Tata India Consumer Fund - Direct',           exchange:'NSE', sector:'MF: Consumer',   price:28.45,  chg:chg('TAIFC01'), type:'MF', cap:'N/A' },
-  { symbol:'QUACT01', name:'Quant Active Fund - Direct',                  exchange:'NSE', sector:'MF: Flexi Cap',  price:645.82, chg:chg('QUACT01'), type:'MF', cap:'N/A' },
+  { symbol:'QUACT01', name:'Quant Active Fund - Direct',                  exchange:'NSE', sector:'MF: Flexi Cap',  price:645.82, chg:chg('QUACT01'), type:'MF', cap:'N/A', amfiCode:135781 },
   { symbol:'QUQNT01', name:'Quant Quantamental Fund - Direct',            exchange:'NSE', sector:'MF: Quant',      price:22.45,  chg:chg('QUQNT01'), type:'MF', cap:'N/A' },
-  { symbol:'WHYCAP01',name:'WhiteOak Capital Flexi Cap Fund - Direct',    exchange:'NSE', sector:'MF: Flexi Cap',  price:18.85,  chg:chg('WHYCAP01'),type:'MF', cap:'N/A' },
+  { symbol:'WHYCAP01',name:'WhiteOak Capital Flexi Cap Fund - Direct',    exchange:'NSE', sector:'MF: Flexi Cap',  price:18.85,  chg:chg('WHYCAP01'),type:'MF', cap:'N/A', amfiCode:148478 },
+  { symbol:'TATEC001',name:'Tata Digital India Fund - Direct',            exchange:'NSE', sector:'MF: Tech',       price:45.82,  chg:chg('TATEC001'),type:'MF', cap:'N/A', amfiCode:119607 },
+  { symbol:'ICBF001', name:'ICICI Pru Banking & Financial Services-Direct',exchange:'NSE',sector:'MF: Banking',   price:128.45, chg:chg('ICBF001'), type:'MF', cap:'N/A', amfiCode:120605 },
+  { symbol:'HDDI001', name:'HDFC Dividend Yield Fund - Direct',           exchange:'NSE', sector:'MF: Dividend',   price:22.45,  chg:chg('HDDI001'), type:'MF', cap:'N/A', amfiCode:119029 },
+  { symbol:'MONIFRA01',name:'Motilal Oswal Nifty 500 Index Fund - Direct',exchange:'NSE', sector:'MF: Index',      price:22.45,  chg:chg('MONIFRA01'),type:'MF',cap:'N/A' },
+  { symbol:'TATINF01',name:'Tata Nifty 50 Index Fund - Direct',           exchange:'NSE', sector:'MF: Index',      price:18.45,  chg:chg('TATINF01'), type:'MF', cap:'N/A' },
+  { symbol:'ZERODHA01',name:'Zerodha Nifty Large Midcap 250 Index - Direct',exchange:'NSE',sector:'MF: Index',    price:22.45,  chg:chg('ZERODHA01'),type:'MF', cap:'N/A' },
+  { symbol:'GROWW001',name:'Groww Nifty 50 Index Fund - Direct',          exchange:'NSE', sector:'MF: Index',      price:14.85,  chg:chg('GROWW001'), type:'MF', cap:'N/A' },
+]
+
+// ============================================================
+// NIFTY 500 Expansion — stocks not covered above
+// ============================================================
+const NIFTY500_EXT: UniverseItem[] = [
+  // ── Auto & Auto Components ──────────────────────────────────────────────────
+  { symbol:'MOTHERSON',  name:'Samvardhana Motherson International', exchange:'NSE', sector:'Auto',        price:212,   chg:chg('MOTHERSON'),  type:'Stock', cap:'Large' },
+  { symbol:'BALKRISIND', name:'Balkrishna Industries Ltd',           exchange:'NSE', sector:'Auto',        price:2845,  chg:chg('BALKRISIND'), type:'Stock', cap:'Mid'   },
+  { symbol:'BHARATFORG', name:'Bharat Forge Ltd',                   exchange:'NSE', sector:'Auto',        price:1245,  chg:chg('BHARATFORG'), type:'Stock', cap:'Mid'   },
+  { symbol:'EXIDEIND',   name:'Exide Industries Ltd',               exchange:'NSE', sector:'Auto',        price:412,   chg:chg('EXIDEIND'),   type:'Stock', cap:'Mid'   },
+  { symbol:'AMARAJABAT', name:'Amara Raja Energy & Mobility Ltd',   exchange:'NSE', sector:'Auto',        price:1145,  chg:chg('AMARAJABAT'), type:'Stock', cap:'Mid'   },
+  { symbol:'BOSCHLTD',   name:'Bosch Ltd',                          exchange:'NSE', sector:'Auto',        price:32450, chg:chg('BOSCHLTD'),   type:'Stock', cap:'Large' },
+  { symbol:'MINDA',      name:'Minda Corporation Ltd',              exchange:'NSE', sector:'Auto',        price:512,   chg:chg('MINDA'),      type:'Stock', cap:'Mid'   },
+  { symbol:'MINDAIND',   name:'Minda Industries Ltd',               exchange:'NSE', sector:'Auto',        price:1845,  chg:chg('MINDAIND'),   type:'Stock', cap:'Mid'   },
+  { symbol:'ENDURANCE',  name:'Endurance Technologies Ltd',         exchange:'NSE', sector:'Auto',        price:2145,  chg:chg('ENDURANCE'),  type:'Stock', cap:'Mid'   },
+  { symbol:'SUNDRMFAST', name:'Sundram Fasteners Ltd',              exchange:'NSE', sector:'Auto',        price:1245,  chg:chg('SUNDRMFAST'), type:'Stock', cap:'Mid'   },
+  { symbol:'TIINDIA',    name:'Tube Investments of India Ltd',      exchange:'NSE', sector:'Auto',        price:3845,  chg:chg('TIINDIA'),    type:'Stock', cap:'Large' },
+  { symbol:'SWARAJENG',  name:'Swaraj Engines Ltd',                 exchange:'NSE', sector:'Auto',        price:2645,  chg:chg('SWARAJENG'),  type:'Stock', cap:'Small' },
+  // ── IT & Technology ────────────────────────────────────────────────────────
+  { symbol:'TATAELXSI',  name:'Tata Elxsi Ltd',                     exchange:'NSE', sector:'IT',          price:7245,  chg:chg('TATAELXSI'),  type:'Stock', cap:'Mid'   },
+  { symbol:'OFSS',       name:'Oracle Financial Services Software', exchange:'NSE', sector:'IT',          price:12450, chg:chg('OFSS'),       type:'Stock', cap:'Large' },
+  { symbol:'WIPRO',      name:'Wipro Ltd',                          exchange:'NSE', sector:'IT',          price:546,   chg:chg('WIPRO2'),     type:'Stock', cap:'Large' },
+  { symbol:'KPITTECH',   name:'KPIT Technologies Ltd',              exchange:'NSE', sector:'IT',          price:1745,  chg:chg('KPITTECH2'),  type:'Stock', cap:'Mid'   },
+  { symbol:'ZENSARTECH', name:'Zensar Technologies Ltd',            exchange:'NSE', sector:'IT',          price:845,   chg:chg('ZENSARTECH'), type:'Stock', cap:'Small' },
+  { symbol:'RATEGAIN',   name:'RateGain Travel Technologies',       exchange:'NSE', sector:'IT',          price:845,   chg:chg('RATEGAIN'),   type:'Stock', cap:'Small' },
+  { symbol:'NEWGEN',     name:'Newgen Software Technologies Ltd',   exchange:'NSE', sector:'IT',          price:1245,  chg:chg('NEWGEN'),     type:'Stock', cap:'Small' },
+  { symbol:'HAPPSTMNDS', name:'Happiest Minds Technologies Ltd',    exchange:'NSE', sector:'IT',          price:845,   chg:chg('HAPPSTMNDS'), type:'Stock', cap:'Small' },
+  { symbol:'BIRLASOFT',  name:'Birlasoft Ltd',                      exchange:'NSE', sector:'IT',          price:545,   chg:chg('BIRLASOFT'),  type:'Stock', cap:'Mid'   },
+  { symbol:'LTTS',       name:'L&T Technology Services Ltd',        exchange:'NSE', sector:'IT',          price:4845,  chg:chg('LTTS'),       type:'Stock', cap:'Large' },
+  { symbol:'INFOEDGE',   name:'Info Edge (India) Ltd',              exchange:'NSE', sector:'IT',          price:7245,  chg:chg('INFOEDGE'),   type:'Stock', cap:'Large' },
+  // ── Banking & Finance ──────────────────────────────────────────────────────
+  { symbol:'YESBANK',    name:'Yes Bank Ltd',                       exchange:'NSE', sector:'Financials',  price:24,    chg:chg('YESBANK'),    type:'Stock', cap:'Mid'   },
+  { symbol:'PNB',        name:'Punjab National Bank',               exchange:'NSE', sector:'Financials',  price:112,   chg:chg('PNB'),        type:'Stock', cap:'Large' },
+  { symbol:'BANKBARODA', name:'Bank of Baroda',                     exchange:'NSE', sector:'Financials',  price:245,   chg:chg('BANKBARODA'), type:'Stock', cap:'Large' },
+  { symbol:'UNIONBANK',  name:'Union Bank of India',                exchange:'NSE', sector:'Financials',  price:145,   chg:chg('UNIONBANK'),  type:'Stock', cap:'Large' },
+  { symbol:'INDIANB',    name:'Indian Bank',                        exchange:'NSE', sector:'Financials',  price:512,   chg:chg('INDIANB'),    type:'Stock', cap:'Mid'   },
+  { symbol:'IOB',        name:'Indian Overseas Bank',               exchange:'NSE', sector:'Financials',  price:62,    chg:chg('IOB'),        type:'Stock', cap:'Mid'   },
+  { symbol:'MAHABANK',   name:'Bank of Maharashtra',                exchange:'NSE', sector:'Financials',  price:62,    chg:chg('MAHABANK'),   type:'Stock', cap:'Small' },
+  { symbol:'ANGELONE',   name:'Angel One Ltd',                      exchange:'NSE', sector:'Financials',  price:2845,  chg:chg('ANGELONE'),   type:'Stock', cap:'Mid'   },
+  { symbol:'NUVAMA',     name:'Nuvama Wealth Management Ltd',       exchange:'NSE', sector:'Financials',  price:6245,  chg:chg('NUVAMA'),     type:'Stock', cap:'Mid'   },
+  { symbol:'HDFCAMC',    name:'HDFC Asset Management Company',      exchange:'NSE', sector:'Financials',  price:4245,  chg:chg('HDFCAMC'),    type:'Stock', cap:'Large' },
+  { symbol:'IIFLWAM',    name:'IIFL Wealth Management Ltd',         exchange:'NSE', sector:'Financials',  price:2145,  chg:chg('IIFLWAM'),    type:'Stock', cap:'Mid'   },
+  { symbol:'LICIHSGFIN', name:'LIC Housing Finance Ltd',            exchange:'NSE', sector:'Financials',  price:712,   chg:chg('LICIHSGFIN'), type:'Stock', cap:'Mid'   },
+  { symbol:'PNBHOUSING', name:'PNB Housing Finance Ltd',            exchange:'NSE', sector:'Financials',  price:945,   chg:chg('PNBHOUSING'), type:'Stock', cap:'Mid'   },
+  { symbol:'CANFINHOME', name:'Can Fin Homes Ltd',                  exchange:'NSE', sector:'Financials',  price:712,   chg:chg('CANFINHOME'), type:'Stock', cap:'Mid'   },
+  { symbol:'MANAPPURAM', name:'Manappuram Finance Ltd',             exchange:'NSE', sector:'Financials',  price:212,   chg:chg('MANAPPURAM'), type:'Stock', cap:'Mid'   },
+  { symbol:'BAJAJHFL',   name:'Bajaj Housing Finance Ltd',          exchange:'NSE', sector:'Financials',  price:145,   chg:chg('BAJAJHFL'),   type:'Stock', cap:'Large' },
+  { symbol:'SUNDARMFIN', name:'Sundaram Finance Ltd',               exchange:'NSE', sector:'Financials',  price:4845,  chg:chg('SUNDARMFIN'), type:'Stock', cap:'Mid'   },
+  { symbol:'MFSL',       name:'Max Financial Services Ltd',         exchange:'NSE', sector:'Insurance',   price:1145,  chg:chg('MFSL'),       type:'Stock', cap:'Large' },
+  { symbol:'ICICIPRULI', name:'ICICI Prudential Life Insurance',    exchange:'NSE', sector:'Insurance',   price:712,   chg:chg('ICICIPRULI'), type:'Stock', cap:'Large' },
+  { symbol:'GICRE',      name:'General Insurance Corp of India',    exchange:'NSE', sector:'Insurance',   price:478,   chg:chg('GICRE'),      type:'Stock', cap:'Large' },
+  // ── FMCG & Consumer ────────────────────────────────────────────────────────
+  { symbol:'JUBLFOOD',   name:'Jubilant FoodWorks Ltd',             exchange:'NSE', sector:'FMCG',        price:645,   chg:chg('JUBLFOOD'),   type:'Stock', cap:'Mid'   },
+  { symbol:'DEVYANI',    name:'Devyani International Ltd',          exchange:'NSE', sector:'FMCG',        price:145,   chg:chg('DEVYANI'),    type:'Stock', cap:'Mid'   },
+  { symbol:'WESTLIFE',   name:'Westlife Foodworld Ltd',             exchange:'NSE', sector:'FMCG',        price:845,   chg:chg('WESTLIFE'),   type:'Stock', cap:'Small' },
+  { symbol:'BIKAJI',     name:'Bikaji Foods International Ltd',     exchange:'NSE', sector:'FMCG',        price:712,   chg:chg('BIKAJI'),     type:'Stock', cap:'Small' },
+  { symbol:'PATANJALI',  name:'Patanjali Foods Ltd',                exchange:'NSE', sector:'FMCG',        price:1845,  chg:chg('PATANJALI'),  type:'Stock', cap:'Mid'   },
+  { symbol:'GODFRYPHLP', name:'Godfrey Phillips India Ltd',         exchange:'NSE', sector:'FMCG',        price:6245,  chg:chg('GODFRYPHLP'), type:'Stock', cap:'Mid'   },
+  { symbol:'UNITDSPR',   name:'United Spirits Ltd',                 exchange:'NSE', sector:'FMCG',        price:1245,  chg:chg('UNITDSPR'),   type:'Stock', cap:'Large' },
+  // ── Energy & Oil ───────────────────────────────────────────────────────────
+  { symbol:'GAIL',       name:'GAIL (India) Ltd',                   exchange:'NSE', sector:'Energy',      price:212,   chg:chg('GAIL'),       type:'Stock', cap:'Large' },
+  { symbol:'HINDPETRO',  name:'Hindustan Petroleum Corp Ltd',       exchange:'NSE', sector:'Energy',      price:378,   chg:chg('HINDPETRO'),  type:'Stock', cap:'Large' },
+  { symbol:'MRPL',       name:'Mangalore Refinery & Petrochemicals',exchange:'NSE', sector:'Energy',      price:245,   chg:chg('MRPL'),       type:'Stock', cap:'Mid'   },
+  { symbol:'CHENNPETRO', name:'Chennai Petroleum Corporation Ltd',  exchange:'NSE', sector:'Energy',      price:712,   chg:chg('CHENNPETRO'), type:'Stock', cap:'Small' },
+  { symbol:'TATAPOWER',  name:'Tata Power Company Ltd',             exchange:'NSE', sector:'Utilities',   price:445,   chg:chg('TATAPOWER'),  type:'Stock', cap:'Large' },
+  { symbol:'CESC',       name:'CESC Ltd',                           exchange:'NSE', sector:'Utilities',   price:178,   chg:chg('CESC'),       type:'Stock', cap:'Mid'   },
+  { symbol:'TORNTPOWER', name:'Torrent Power Ltd',                  exchange:'NSE', sector:'Utilities',   price:1845,  chg:chg('TORNTPOWER'), type:'Stock', cap:'Large' },
+  { symbol:'SJVN',       name:'SJVN Ltd',                           exchange:'NSE', sector:'Utilities',   price:112,   chg:chg('SJVN'),       type:'Stock', cap:'Mid'   },
+  { symbol:'JPPOWER',    name:'Jaiprakash Power Ventures Ltd',      exchange:'NSE', sector:'Utilities',   price:12,    chg:chg('JPPOWER'),    type:'Stock', cap:'Small' },
+  { symbol:'RPOWER',     name:'Reliance Power Ltd',                 exchange:'NSE', sector:'Utilities',   price:22,    chg:chg('RPOWER'),     type:'Stock', cap:'Small' },
+  { symbol:'ADANIGAS',   name:'Adani Total Gas Ltd',                exchange:'NSE', sector:'Energy',      price:845,   chg:chg('ADANIGAS'),   type:'Stock', cap:'Large' },
+  { symbol:'GUJGASLTD',  name:'Gujarat Gas Ltd',                    exchange:'NSE', sector:'Energy',      price:512,   chg:chg('GUJGASLTD'),  type:'Stock', cap:'Mid'   },
+  { symbol:'MGL',        name:'Mahanagar Gas Ltd',                  exchange:'NSE', sector:'Energy',      price:1645,  chg:chg('MGL'),        type:'Stock', cap:'Mid'   },
+  { symbol:'IGL',        name:'Indraprastha Gas Ltd',               exchange:'NSE', sector:'Energy',      price:412,   chg:chg('IGL'),        type:'Stock', cap:'Mid'   },
+  // ── Metals & Mining ────────────────────────────────────────────────────────
+  { symbol:'NMDC',       name:'NMDC Ltd',                           exchange:'NSE', sector:'Metals',      price:212,   chg:chg('NMDC'),       type:'Stock', cap:'Large' },
+  { symbol:'HINDZINC',   name:'Hindustan Zinc Ltd',                 exchange:'NSE', sector:'Metals',      price:545,   chg:chg('HINDZINC'),   type:'Stock', cap:'Large' },
+  { symbol:'NATIONALUM', name:'National Aluminium Company',         exchange:'NSE', sector:'Metals',      price:212,   chg:chg('NATIONALUM'), type:'Stock', cap:'Mid'   },
+  { symbol:'WELCORP',    name:'Welspun Corp Ltd',                   exchange:'NSE', sector:'Metals',      price:745,   chg:chg('WELCORP'),    type:'Stock', cap:'Mid'   },
+  { symbol:'JSWENERGY',  name:'JSW Energy Ltd',                     exchange:'NSE', sector:'Utilities',   price:512,   chg:chg('JSWENERGY'),  type:'Stock', cap:'Large' },
+  { symbol:'RATNAMANI',  name:'Ratnamani Metals & Tubes Ltd',       exchange:'NSE', sector:'Metals',      price:2845,  chg:chg('RATNAMANI'),  type:'Stock', cap:'Mid'   },
+  { symbol:'APL',        name:'APL Apollo Tubes Ltd',               exchange:'NSE', sector:'Metals',      price:1645,  chg:chg('APL'),        type:'Stock', cap:'Mid'   },
+  // ── Pharma & Healthcare ────────────────────────────────────────────────────
+  { symbol:'BIOCON',     name:'Biocon Ltd',                         exchange:'NSE', sector:'Pharma',      price:312,   chg:chg('BIOCON'),     type:'Stock', cap:'Large' },
+  { symbol:'NATCOPHARM', name:'Natco Pharma Ltd',                   exchange:'NSE', sector:'Pharma',      price:1545,  chg:chg('NATCOPHARM'), type:'Stock', cap:'Mid'   },
+  { symbol:'GLAXO',      name:'GSK Pharmaceuticals Ltd',            exchange:'NSE', sector:'Pharma',      price:2145,  chg:chg('GLAXO'),      type:'Stock', cap:'Mid'   },
+  { symbol:'PFIZER',     name:'Pfizer Ltd',                         exchange:'NSE', sector:'Pharma',      price:5245,  chg:chg('PFIZER'),     type:'Stock', cap:'Mid'   },
+  { symbol:'JUBLPHARM',  name:'Jubilant Pharmova Ltd',              exchange:'NSE', sector:'Pharma',      price:1045,  chg:chg('JUBLPHARM'),  type:'Stock', cap:'Mid'   },
+  { symbol:'SURYAROSNI', name:'Surya Roshni Ltd',                   exchange:'NSE', sector:'Capital Goods',price:545,  chg:chg('SURYAROSNI'), type:'Stock', cap:'Small' },
+  { symbol:'MAXHEALTH',  name:'Max Healthcare Institute Ltd',       exchange:'NSE', sector:'Healthcare',  price:845,   chg:chg('MAXHEALTH'),  type:'Stock', cap:'Large' },
+  { symbol:'FORTIS',     name:'Fortis Healthcare Ltd',              exchange:'NSE', sector:'Healthcare',  price:678,   chg:chg('FORTIS'),     type:'Stock', cap:'Large' },
+  { symbol:'KIMS',       name:'Krishna Institute of Medical Sciences',exchange:'NSE',sector:'Healthcare', price:2145,  chg:chg('KIMS'),       type:'Stock', cap:'Mid'   },
+  { symbol:'RAINBOW',    name:'Rainbow Children Medicare Ltd',      exchange:'NSE', sector:'Healthcare',  price:1345,  chg:chg('RAINBOW'),    type:'Stock', cap:'Small' },
+  // ── Capital Goods & Industrials ────────────────────────────────────────────
+  { symbol:'SIEMENS2',   name:'Siemens Ltd',                        exchange:'NSE', sector:'Capital Goods',price:7245, chg:chg('SIEMENS2'),   type:'Stock', cap:'Large' },
+  { symbol:'SUZLON',     name:'Suzlon Energy Ltd',                  exchange:'NSE', sector:'Utilities',   price:62,    chg:chg('SUZLON'),     type:'Stock', cap:'Mid'   },
+  { symbol:'BHARAT',     name:'Bharat Heavy Electricals Ltd',       exchange:'NSE', sector:'Capital Goods',price:298,  chg:chg('BHARAT'),     type:'Stock', cap:'Large' },
+  { symbol:'POWERINDIA', name:'ABB Power Products & Systems India', exchange:'NSE', sector:'Capital Goods',price:8245, chg:chg('POWERINDIA'), type:'Stock', cap:'Mid'   },
+  { symbol:'DATAPATTNS', name:'Data Patterns (India) Ltd',          exchange:'NSE', sector:'Defence',     price:2845,  chg:chg('DATAPATTNS'), type:'Stock', cap:'Small' },
+  { symbol:'MAZDOCK',    name:'Mazagon Dock Shipbuilders Ltd',      exchange:'NSE', sector:'Defence',     price:4845,  chg:chg('MAZDOCK'),    type:'Stock', cap:'Mid'   },
+  { symbol:'COCHINSHIP', name:'Cochin Shipyard Ltd',                exchange:'NSE', sector:'Defence',     price:1845,  chg:chg('COCHINSHIP'), type:'Stock', cap:'Mid'   },
+  { symbol:'GARDENREACH', name:'Garden Reach Shipbuilders Ltd',     exchange:'NSE', sector:'Defence',     price:2145,  chg:chg('GARDENREACH'),type:'Stock', cap:'Mid'   },
+  { symbol:'HAL',        name:'Hindustan Aeronautics Ltd',          exchange:'NSE', sector:'Defence',     price:4512,  chg:chg('HAL'),        type:'Stock', cap:'Large' },
+  { symbol:'BEML',       name:'BEML Ltd',                           exchange:'NSE', sector:'Defence',     price:4245,  chg:chg('BEML'),       type:'Stock', cap:'Mid'   },
+  { symbol:'PARAS',      name:'Paras Defence and Space Technologies',exchange:'NSE', sector:'Defence',    price:1245,  chg:chg('PARAS'),      type:'Stock', cap:'Small' },
+  { symbol:'GRINDWELL',  name:'Grindwell Norton Ltd',               exchange:'NSE', sector:'Industrials', price:2845,  chg:chg('GRINDWELL'),  type:'Stock', cap:'Mid'   },
+  { symbol:'SCHAEFFLER2',name:'Schaeffler India Ltd',               exchange:'NSE', sector:'Industrials', price:4512,  chg:chg('SCHAEFFLER2'),type:'Stock', cap:'Mid'   },
+  { symbol:'SKFINDIA2',  name:'SKF India Ltd',                      exchange:'NSE', sector:'Industrials', price:5845,  chg:chg('SKFINDIA2'),  type:'Stock', cap:'Mid'   },
+  { symbol:'TIRUMALCHM', name:'Thirumalai Chemicals Ltd',           exchange:'NSE', sector:'Chemicals',   price:245,   chg:chg('TIRUMALCHM'), type:'Stock', cap:'Small' },
+  { symbol:'KIRLOSENG',  name:'Kirloskar Oil Engines Ltd',          exchange:'NSE', sector:'Industrials', price:1045,  chg:chg('KIRLOSENG'),  type:'Stock', cap:'Mid'   },
+  // ── Chemicals & Specialty ──────────────────────────────────────────────────
+  { symbol:'SRF',        name:'SRF Ltd',                            exchange:'NSE', sector:'Chemicals',   price:2645,  chg:chg('SRF'),        type:'Stock', cap:'Large' },
+  { symbol:'NAVINFLUOR', name:'Navin Fluorine International Ltd',   exchange:'NSE', sector:'Chemicals',   price:3845,  chg:chg('NAVINFLUOR'), type:'Stock', cap:'Mid'   },
+  { symbol:'AARTIIND',   name:'Aarti Industries Ltd',               exchange:'NSE', sector:'Chemicals',   price:645,   chg:chg('AARTIIND'),   type:'Stock', cap:'Mid'   },
+  { symbol:'AARTI',      name:'Aarti Drugs Ltd',                    exchange:'NSE', sector:'Chemicals',   price:545,   chg:chg('AARTI'),      type:'Stock', cap:'Small' },
+  { symbol:'CLEAN',      name:'Clean Science & Technology Ltd',     exchange:'NSE', sector:'Chemicals',   price:1645,  chg:chg('CLEAN'),      type:'Stock', cap:'Mid'   },
+  { symbol:'LXCHEM',     name:'Laxmi Organic Industries Ltd',       exchange:'NSE', sector:'Chemicals',   price:212,   chg:chg('LXCHEM'),     type:'Stock', cap:'Small' },
+  { symbol:'SUDARSCHEM', name:'Sudarshan Chemical Industries Ltd',  exchange:'NSE', sector:'Chemicals',   price:1045,  chg:chg('SUDARSCHEM'), type:'Stock', cap:'Small' },
+  { symbol:'TATACHEM2',  name:'Tata Chemicals Ltd',                 exchange:'NSE', sector:'Chemicals',   price:1145,  chg:chg('TATACHEM2'),  type:'Stock', cap:'Mid'   },
+  { symbol:'CHAMBALFER', name:'Chambal Fertilisers & Chemicals',    exchange:'NSE', sector:'Chemicals',   price:512,   chg:chg('CHAMBALFER'), type:'Stock', cap:'Mid'   },
+  { symbol:'COROMANDEL', name:'Coromandel International Ltd',       exchange:'NSE', sector:'Chemicals',   price:1845,  chg:chg('COROMANDEL'), type:'Stock', cap:'Mid'   },
+  { symbol:'GSFC',       name:'Gujarat State Fertilizers & Chemicals',exchange:'NSE',sector:'Chemicals',  price:212,   chg:chg('GSFC'),       type:'Stock', cap:'Small' },
+  // ── Real Estate & Construction ─────────────────────────────────────────────
+  { symbol:'MAHINDCIE2', name:'Mahindra Lifespace Developers',      exchange:'NSE', sector:'Real Estate', price:512,   chg:chg('MAHINDCIE2'), type:'Stock', cap:'Small' },
+  { symbol:'BRIGADGRP',  name:'Brigade Enterprises Ltd',            exchange:'NSE', sector:'Real Estate', price:1245,  chg:chg('BRIGADGRP'),  type:'Stock', cap:'Mid'   },
+  { symbol:'SOBHA',      name:'Sobha Ltd',                          exchange:'NSE', sector:'Real Estate', price:1645,  chg:chg('SOBHA'),      type:'Stock', cap:'Mid'   },
+  { symbol:'SUNTECK',    name:'Sunteck Realty Ltd',                 exchange:'NSE', sector:'Real Estate', price:512,   chg:chg('SUNTECK'),    type:'Stock', cap:'Small' },
+  { symbol:'KOLTEPATIL', name:'Kolte-Patil Developers Ltd',         exchange:'NSE', sector:'Real Estate', price:545,   chg:chg('KOLTEPATIL'), type:'Stock', cap:'Small' },
+  { symbol:'NCC',        name:'NCC Ltd',                            exchange:'NSE', sector:'Infrastructure',price:312, chg:chg('NCC'),        type:'Stock', cap:'Mid'   },
+  { symbol:'KNRCON',     name:'KNR Constructions Ltd',              exchange:'NSE', sector:'Infrastructure',price:312, chg:chg('KNRCON'),     type:'Stock', cap:'Mid'   },
+  { symbol:'PNCINFRA',   name:'PNC Infratech Ltd',                  exchange:'NSE', sector:'Infrastructure',price:445, chg:chg('PNCINFRA'),   type:'Stock', cap:'Mid'   },
+  { symbol:'RITES',      name:'RITES Ltd',                          exchange:'NSE', sector:'Infrastructure',price:712, chg:chg('RITES'),      type:'Stock', cap:'Mid'   },
+  // ── Telecom & Media ────────────────────────────────────────────────────────
+  { symbol:'IDEA',       name:'Vodafone Idea Ltd',                  exchange:'NSE', sector:'Telecom',     price:14,    chg:chg('IDEA'),       type:'Stock', cap:'Mid'   },
+  { symbol:'TATACOMM',   name:'Tata Communications Ltd',            exchange:'NSE', sector:'Telecom',     price:1845,  chg:chg('TATACOMM'),   type:'Stock', cap:'Large' },
+  { symbol:'SUNTVN',     name:'Sun TV Network Ltd',                 exchange:'NSE', sector:'Consumer',    price:712,   chg:chg('SUNTVN'),     type:'Stock', cap:'Mid'   },
+  { symbol:'PVRL',       name:'PVR INOX Ltd',                       exchange:'NSE', sector:'Consumer',    price:1545,  chg:chg('PVRL'),       type:'Stock', cap:'Mid'   },
+  { symbol:'ZEEL',       name:'Zee Entertainment Enterprises',      exchange:'NSE', sector:'Consumer',    price:145,   chg:chg('ZEEL'),       type:'Stock', cap:'Mid'   },
+  // ── Logistics & E-commerce ─────────────────────────────────────────────────
+  { symbol:'MAERSK',     name:'AP Moller Maersk India (Safexpress)',exchange:'NSE', sector:'Logistics',   price:312,   chg:chg('MAERSK'),     type:'Stock', cap:'Small' },
+  { symbol:'GATI',       name:'Allcargo Gati Ltd',                  exchange:'NSE', sector:'Logistics',   price:112,   chg:chg('GATI'),       type:'Stock', cap:'Small' },
+  { symbol:'TCI',        name:'Transport Corporation of India',     exchange:'NSE', sector:'Logistics',   price:1245,  chg:chg('TCI'),        type:'Stock', cap:'Small' },
+  { symbol:'MAHLOG',     name:'Mahindra Logistics Ltd',             exchange:'NSE', sector:'Logistics',   price:412,   chg:chg('MAHLOG'),     type:'Stock', cap:'Small' },
+  // ── Retail & Consumer Discretionary ───────────────────────────────────────
+  { symbol:'INDIGOPNTS', name:'Indigo Paints Ltd',                  exchange:'NSE', sector:'FMCG',        price:1645,  chg:chg('INDIGOPNTS'), type:'Stock', cap:'Mid'   },
+  { symbol:'KANSAINER',  name:'Kansai Nerolac Paints Ltd',          exchange:'NSE', sector:'FMCG',        price:312,   chg:chg('KANSAINER'),  type:'Stock', cap:'Mid'   },
+  { symbol:'MARICO',     name:'Marico Ltd',                         exchange:'NSE', sector:'FMCG',        price:645,   chg:chg('MARICO'),     type:'Stock', cap:'Large' },
+  { symbol:'PGHH',       name:'Procter & Gamble Hygiene & Health',  exchange:'NSE', sector:'FMCG',        price:14500, chg:chg('PGHH'),       type:'Stock', cap:'Mid'   },
+  { symbol:'GILLETTE',   name:'Gillette India Ltd',                 exchange:'NSE', sector:'FMCG',        price:8450,  chg:chg('GILLETTE'),   type:'Stock', cap:'Mid'   },
+  { symbol:'HONAUT',     name:'Honeywell Automation India Ltd',     exchange:'NSE', sector:'Capital Goods',price:45000,chg:chg('HONAUT'),     type:'Stock', cap:'Mid'   },
+  // ── Textiles ───────────────────────────────────────────────────────────────
+  { symbol:'RAYMOND',    name:'Raymond Ltd',                        exchange:'NSE', sector:'Textiles',    price:2145,  chg:chg('RAYMOND'),    type:'Stock', cap:'Mid'   },
+  { symbol:'ARVIND',     name:'Arvind Ltd',                         exchange:'NSE', sector:'Textiles',    price:312,   chg:chg('ARVIND'),     type:'Stock', cap:'Mid'   },
+  { symbol:'VARDHMAN',   name:'Vardhman Textiles Ltd',              exchange:'NSE', sector:'Textiles',    price:445,   chg:chg('VARDHMAN'),   type:'Stock', cap:'Mid'   },
+  { symbol:'KITEX',      name:'Kitex Garments Ltd',                 exchange:'NSE', sector:'Textiles',    price:1045,  chg:chg('KITEX'),      type:'Stock', cap:'Small' },
+  // ── Agri & Sugar ──────────────────────────────────────────────────────────
+  { symbol:'PIIND',      name:'PI Industries Ltd',                  exchange:'NSE', sector:'Chemicals',   price:4512,  chg:chg('PIIND2'),     type:'Stock', cap:'Large' },
+  { symbol:'UBL',        name:'United Breweries Ltd',               exchange:'NSE', sector:'FMCG',        price:1945,  chg:chg('UBL'),        type:'Stock', cap:'Large' },
+  // ── Jewellery ─────────────────────────────────────────────────────────────
+  { symbol:'PCJEWELLER',  name:'PC Jeweller Ltd',                   exchange:'NSE', sector:'Consumer',    price:78,    chg:chg('PCJEWELLER'),  type:'Stock', cap:'Small' },
+  { symbol:'THANGAMAYL',  name:'Thangamayil Jewellery Ltd',         exchange:'BSE', sector:'Consumer',    price:2145,  chg:chg('THANGAMAYL'),  type:'Stock', cap:'Small' },
+  { symbol:'GOLDENSCMI',  name:'Goldiam International Ltd',         exchange:'BSE', sector:'Consumer',    price:312,   chg:chg('GOLDENSCMI'),  type:'Stock', cap:'Small' },
 ]
 
 // ============================================================
@@ -491,6 +680,7 @@ export const STOCK_UNIVERSE: UniverseItem[] = [
   ...NIFTY_NEXT50,
   ...MIDCAP,
   ...SMALLCAP,
+  ...NIFTY500_EXT,
   ...BSE_STOCKS,
   ...ETFS,
   ...MUTUAL_FUNDS,

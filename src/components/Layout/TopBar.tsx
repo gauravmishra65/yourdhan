@@ -1,12 +1,20 @@
-import { Menu, Search, Moon, Sun, IndianRupee, LogIn, LogOut, User, ChevronDown } from 'lucide-react';
+import { Menu, Search, Moon, Sun, IndianRupee, LogIn, LogOut, User, ChevronDown, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
+import { usePriceStore } from '../../store/priceStore';
 import { useEffect, useRef, useState } from 'react';
 import AuthModal from '../ui/AuthModal';
+import { UNIVERSE } from '../../data/stockUniverse';
+import type { FetchTarget } from '../../services/liveDataService';
+
+const FETCH_TARGETS: FetchTarget[] = UNIVERSE.map(u => ({
+  symbol: u.symbol, exchange: u.exchange, type: u.type,
+}));
 
 export default function TopBar() {
   const { toggleSidebar, toggleTheme, theme } = useUIStore();
   const { user, signOut } = useAuthStore();
+  const { loading, liveEnabled, freshness, refreshPrices } = usePriceStore();
   const [searchFocused, setSearchFocused] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserMenu,  setShowUserMenu]  = useState(false);
@@ -168,8 +176,54 @@ export default function TopBar() {
         </div>
       </div>
 
-      {/* Right: Theme Toggle + Auth */}
+      {/* Right: Live Indicator + Theme Toggle + Auth */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+        {/* Live price indicator */}
+        <button
+          onClick={() => refreshPrices(FETCH_TARGETS)}
+          disabled={loading}
+          title={liveEnabled ? `Prices live · ${freshness()}` : 'Click to load live prices'}
+          aria-label="Refresh live prices"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            background: liveEnabled ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.08)',
+            border: `1px solid ${liveEnabled ? 'rgba(34,197,94,0.25)' : '#1e2d45'}`,
+            borderRadius: '7px', padding: '4px 8px', cursor: loading ? 'wait' : 'pointer',
+            transition: 'all 0.15s', opacity: loading ? 0.7 : 1,
+          }}
+          onMouseEnter={e => {
+            if (!loading) (e.currentTarget as HTMLElement).style.background =
+              liveEnabled ? 'rgba(34,197,94,0.16)' : 'rgba(100,116,139,0.16)';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background =
+              liveEnabled ? 'rgba(34,197,94,0.08)' : 'rgba(100,116,139,0.08)';
+          }}
+        >
+          {/* Pulsing dot when live */}
+          <span style={{
+            width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0,
+            background: liveEnabled ? '#22c55e' : '#64748b',
+            boxShadow: liveEnabled ? '0 0 0 0 rgba(34,197,94,0.5)' : 'none',
+            animation: liveEnabled && !loading ? 'yd-pulse 2s infinite' : 'none',
+          }} />
+          <span style={{ fontSize: '11px', fontWeight: 600, color: liveEnabled ? '#86efac' : '#64748b', whiteSpace: 'nowrap' }}>
+            {loading ? 'Updating…' : liveEnabled ? 'Live' : 'Mock'}
+          </span>
+          {liveEnabled && !loading && (
+            <span style={{ fontSize: '10px', color: '#4ade80', opacity: 0.75 }}>
+              {freshness()}
+            </span>
+          )}
+          {loading ? (
+            <RefreshCw size={10} style={{ color: '#64748b', animation: 'spin 1s linear infinite' }} />
+          ) : liveEnabled ? (
+            <Wifi size={10} style={{ color: '#4ade80', opacity: 0.7 }} />
+          ) : (
+            <WifiOff size={10} style={{ color: '#475569' }} />
+          )}
+        </button>
+
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
